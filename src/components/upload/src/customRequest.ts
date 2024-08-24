@@ -22,21 +22,24 @@ function getSuffix(filename: any): string {
 
 async function ossUpload() {
   const info: any = await fetch('/api/image/sts');
+  const infoJson = await info.json();
+
   const client = new OSS({
     // yourRegion填写Bucket所在地域。以华东1（杭州）为例，Region填写为oss-cn-hangzhou。
     region: 'oss-cn-beijing',
     // 从STS服务获取的临时访问密钥（AccessKey ID和AccessKey Secret）。
-    accessKeyId: info.AccessKeyId,
-    accessKeySecret: info.AccessKeySecret,
+    accessKeyId: infoJson.credentials.AccessKeyId,
+    accessKeySecret: infoJson.credentials.AccessKeySecret,
     // 从STS服务获取的安全令牌（SecurityToken）。
-    stsToken: info.SecurityToken,
+    stsToken: infoJson.credentials.SecurityToken,
     refreshSTSToken: async () => {
       // 向您搭建的STS服务获取临时访问凭证。
       const info: any = await fetch('/api/image/sts');
+      const infoJson = await info.json();
       return {
-        accessKeyId: info.AccessKeyId,
-        accessKeySecret: info.AccessKeySecret,
-        stsToken: info.SecurityToken
+        accessKeyId: infoJson.credentials.AccessKeyId,
+        accessKeySecret: infoJson.credentials.AccessKeySecret,
+        stsToken: infoJson.credentials.SecurityToken
       };
     },
     // 刷新临时访问凭证的时间间隔，单位为毫秒。
@@ -66,13 +69,13 @@ export function getCustomRequest(options: UploadOption): typeof customRequest {
     before();
 
     if (!action) {
-      const client: any = ossUpload();
+      const client: any = await ossUpload();
       const fileName = `/files/${getFileNameUUID()}${getSuffix(fileItem.name)}`;
-      const result = await client.put(fileName, fileItem, options);
+      const result = await client.put(fileName, fileItem.file, options);
 
-      if (result.statusCode === 200)
+      if (result.res.status === 200)
         onSuccess({
-          url: `https://${result.Location}`,
+          url: result.url,
           name: fileItem.name
         });
       else onError(result);
@@ -83,55 +86,6 @@ export function getCustomRequest(options: UploadOption): typeof customRequest {
         }
       };
     }
-    // 执行自带的
-    const xhr = new XMLHttpRequest();
-    // xhr.withCredentials = true
-    if (xhr.upload) {
-      xhr.upload.onprogress = function (event) {
-        let percent = 0;
-        if (event.total > 0) {
-          percent = (event.loaded / event.total) * 100;
-        }
-        onProgress(Number(percent), event);
-      };
-    }
-    xhr.onerror = function (e) {
-      onError(e);
-      error();
-    };
-    xhr.onload = function onload() {
-      if (xhr.status < 200 || xhr.status >= 300) {
-        return onError(xhr.responseText);
-      }
-      const result = JSON.parse(xhr.response);
-      if (result?.code === 200) {
-        onSuccess(result);
-        success();
-      } else {
-        onError();
-        error();
-      }
-    };
-    const nameStr =
-      typeof name === 'string'
-        ? name
-        : typeof name === 'function'
-          ? name(fileItem)
-          : '';
-    const formData = new FormData();
-    formData.append('name', fileItem.name || '');
-    formData.append('success_action_status', '200');
-    formData.append(nameStr || 'file', fileItem.file as File);
-
-    xhr.open('put', action || '', true);
-    before();
-    xhr.send(formData);
-
-    return {
-      abort() {
-        xhr.abort();
-      }
-    };
   };
 }
 
@@ -142,6 +96,7 @@ export async function customRequest(
   error = () => {}
 ): Promise<UploadRequest> {
   const { onProgress, onError, onSuccess, fileItem, name, action } = option;
+
   if (testImage(fileItem.name || '')) {
     // fileItem.file = await compressImg(fileItem.file) || fileItem.file
     const blob: any = await imageCompression(fileItem.file as File, {

@@ -1,5 +1,5 @@
 import axios from 'axios';
 
-export function imageHello(data: any) {
-    return axios.get('/api/image', { data });
+export function submitImage(data) {
+  return axios.post('/api/image/genMainImage', { data });
 }

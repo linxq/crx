@@ -1,5 +1,6 @@
 import { loadEnv, type ConfigEnv, type UserConfigExport } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import vueJsx from '@vitejs/plugin-vue-jsx';
 import path from 'path';
 import configArcoStyleImportPlugin from './src/plugin/arcoStyleImport';
 
@@ -50,6 +51,6 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
         '@': path.resolve(__dirname, 'src')
       }
     },
-    plugins: [vue(), configArcoStyleImportPlugin()]
+    plugins: [vue(), vueJsx(), configArcoStyleImportPlugin()]
   };
 };

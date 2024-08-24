@@ -16,12 +16,10 @@
         ></div>
       </a-form-item>
       <a-form-item field="name" label="上传logo（可选）">
-        <a-upload
-          action="/"
-          :fileList="file ? [file] : []"
+        <n-upload
+          accept="image/png,image/jpeg,image/jpg"
           :show-file-list="false"
-          @change="onChange"
-          @progress="onProgress"
+          v-model:files="data.logoUrl"
         >
           <template #upload-button>
             <div
@@ -33,9 +31,9 @@
             >
               <div
                 class="arco-upload-list-picture custom-upload-avatar"
-                v-if="file && file.url"
+                v-if="data?.logoUrl[0]?.url"
               >
-                <img :src="file.url" />
+                <img :src="data?.logoUrl[0]?.url" />
                 <div class="arco-upload-list-picture-mask">
                   <IconEdit />
                 </div>
@@ -60,7 +58,7 @@
               </div>
             </div>
           </template>
-        </a-upload>
+        </n-upload>
       </a-form-item>
       <a-form-item label="是否批量" style="width: 500px; display: block">
         <a-radio-group
@@ -92,8 +90,20 @@
           </template>
         </a-radio-group>
       </a-form-item>
-      <a-form-item v-if="form.batch === '单张'" label="上传图片"></a-form-item>
-      <a-form-item v-else label="上传压缩包"></a-form-item>
+      <a-form-item v-if="form.batch === '单张'" label="上传图片">
+        <n-upload
+          accept="image/png,image/jpeg,image/jpg"
+          v-model:files="data.image"
+          :limit="1"
+        ></n-upload>
+      </a-form-item>
+      <a-form-item v-else label="上传压缩包">
+        <n-upload
+          v-model:files="data.compress"
+          accept=".zip,.rar"
+          :limit="1"
+        ></n-upload>
+      </a-form-item>
       <a-form-item label="图片大小">
         <a-select v-model="form.size">
           <a-option :value="400">400*400</a-option>
@@ -103,13 +113,17 @@
       </a-form-item>
     </a-form>
     <a-space style="margin-bottom: 20px">
-      <a-button type="outline">生成</a-button>
+      <a-button type="outline" @click="onSubmit">生成</a-button>
     </a-space>
   </div>
 </template>
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, watch } from 'vue';
 import transparent from '@/assets/images/transparent.png';
+import { NUpload } from '@/components/upload/';
+import { useImageStore } from '@/store';
+
+const store = useImageStore();
 const form = reactive({
   name: 'name',
   color: 'transparent',
@@ -117,18 +131,37 @@ const form = reactive({
   size: 800
 });
 const data = reactive({
-  colors: ['transparent', '#ffffff', '#165DFF']
+  colors: ['transparent', '#ffffff', '#165DFF'],
+  list: [],
+  image: [],
+  compress: [],
+  logoUrl: []
 });
+
+watch(
+  () => data.image,
+  val => {
+    console.log(val);
+  }
+);
 const file = ref({});
 
 function checkColor(colorValue) {
   form.color = colorValue;
 }
+
+function onChange(file) {
+  console.log('🚀 ~ file:', file);
+}
+
+function onSubmit() {
+  store.submitMainImage();
+}
 </script>
 <style scoped>
 .left {
   overflow: hidden;
-  flex: 3 3 250px;
+  flex: 3 3 300px;
   margin: 0px;
   padding: 0px 10px;
   background: #ffffff;

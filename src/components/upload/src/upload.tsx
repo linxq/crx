@@ -1,4 +1,4 @@
-import { Upload } from '@arco-design/web-vue'
+import { Upload } from '@arco-design/web-vue';
 import {
   defineComponent,
   defineExpose,
@@ -9,11 +9,11 @@ import {
   watch,
   ref,
   toRefs
-} from 'vue'
-import { FileItem, ProgressEvent, UploadOption } from './interface'
-import { getCustomRequest } from './customRequest'
-import { downloadFile } from './download'
-import { isEqual } from 'lodash-es'
+} from 'vue';
+import { FileItem, ProgressEvent, UploadOption } from './interface';
+import { getCustomRequest } from './customRequest';
+import { downloadFile } from './download';
+import { isEqual } from 'lodash-es';
 export default defineComponent({
   name: 'Upload',
   components: {
@@ -58,13 +58,13 @@ export default defineComponent({
     files: {
       type: Array as PropType<FileItem[] | undefined | any>,
       default() {
-        return []
+        return [];
       }
     },
     defaultFiles: {
       type: Array as PropType<FileItem[] | undefined | any>,
       default() {
-        return []
+        return [];
       }
     },
     onSuccess: {
@@ -89,71 +89,72 @@ export default defineComponent({
   setup(props: any, { emit, attrs, slots }) {
     const data = reactive({
       fileList: props.defaultFiles.map((item: any): any => {
-        item.uid = Date.now()
-        return item
+        item.uid = Date.now();
+        return item;
       })
-    })
-    const uplaodComponent = ref('')
+    });
+    const uplaodComponent = ref('');
     function handlerSuccess(fileItem: FileItem): void {}
 
     function handlerChange(fileList: FileItem[]): any {}
 
     function handlerError(fileItem: FileItem): void {
-      emit('error', fileItem)
+      emit('error', fileItem);
     }
-    const instance: any = getCurrentInstance()
+    const instance: any = getCurrentInstance();
 
     const customRequest = getCustomRequest({
       convert2Jpeg: props.convert2Jpeg,
       quality: props.quality
-    })
+    });
 
     watch(
       () => data.fileList,
       function (newVal, oldVal) {
+        console.log('🚀 ~ setup ~ newVal:', newVal);
         if ((newVal || []).every((item: any): any => item.status === 'done')) {
           const list = (newVal || []).map((item: any): any => {
             if (item.response) {
               return {
                 ...item.response
-              }
+              };
             } else {
               return {
                 name: item.name,
                 url: item.url
-              }
+              };
             }
-          })
-          emit('success', list)
-          emit('update:files', list)
-          emit('change', list)
+          });
+          emit('success', list);
+          emit('update:files', list);
+          emit('change', list);
         }
       }
-    )
+    );
 
     watch(
       () => props.defaultFiles,
       function (newVal, oldVal) {
         data.fileList = props.defaultFiles.map((item: any): any => {
-          item.uid = Date.now()
-          item.url = item.url.replace('http://', 'https://')
-          return item
-        })
+          item.uid = Date.now();
+          item.url = item.url.replace('http://', 'https://');
+          return item;
+        });
         if (newVal) {
-          emit('update:files', newVal)
+          emit('update:files', newVal);
         }
       }
-    )
+    );
 
     // 用来做清空处理
     watch(
       () => props.files,
       (newVal, oldVal) => {
-        if (isEqual(newVal, oldVal)) return
-        if (newVal && newVal.length > 0) return
-        data.fileList = newVal
+        if (isEqual(newVal, oldVal)) return;
+        if (newVal && newVal.length > 0) return;
+        data.fileList = newVal;
       }
-    )
+    );
     if (props.state === 'edit') {
       return () => (
         <Upload
@@ -171,7 +172,7 @@ export default defineComponent({
         >
           {slots}
         </Upload>
-      )
+      );
     }
 
     if (props.state === 'detail') {
@@ -180,18 +181,18 @@ export default defineComponent({
           {data.fileList.map((item: FileItem): any => {
             return (
               <a
-                style="display:block;text-decoration: none;margin-bottom:5px;color: rgb(0, 0, 238);cursor: pointer;"
+                style='display:block;text-decoration: none;margin-bottom:5px;color: rgb(0, 0, 238);cursor: pointer;'
                 download={item.name}
                 onClick={function () {
-                  downloadFile(item.url as string, item.name as string)
+                  downloadFile(item.url as string, item.name as string);
                 }}
               >
                 {item.name}
               </a>
-            )
+            );
           })}
         </div>
-      )
+      );
     }
   }
-})
+});
